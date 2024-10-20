@@ -1,0 +1,18 @@
+{"level":"error","message":"403 - undefined","service":"your-service-name","timestamp":"2024-07-22 08:00:12"}
+{"level":"error","message":"403 - undefined","service":"your-service-name","timestamp":"2024-07-22 08:00:58"}
+{"level":"error","message":"403 - undefined","service":"your-service-name","timestamp":"2024-07-22 08:12:47.022 AM"}
+[2024-07-22 08:14:04.433 AM] [31merror[39m: 403 - undefined
+[2024-07-22 08:15:27.595 AM] [31merror[39m: 403 - undefined
+[2024-07-22 08:16:06.804 AM] [31merror[39m: 	403 - undefined
+[2024-07-22 08:17:16.619 AM] error: 	403 - undefined
+[2024-07-22 08:17:49.015 AM] [31merror[39m: 	403 - undefined
+[2024-07-22 08:40:35.956 AM] error: 403 - undefined
+[2024-07-22 09:34:23.657 AM] error: 403 - undefined
+[2024-07-22 09:34:23.777 AM] error: 403 - undefined
+[2024-07-22 09:34:24.342 AM] error: 403 - undefined
+[2024-07-22 09:34:24.378 AM] error: 403 - undefined
+[2024-07-22 09:34:24.384 AM] error: 403 - undefined
+[2024-07-22 10:40:22.239 AM] error: 403 - Error: Shop already registered!
+[2024-07-22 10:40:22.392 AM] error: 403 - Error: Shop already registered!
+[2024-07-22 10:40:22.678 AM] error: 403 - Error: Shop already registered!
+[2024-07-22 10:40:28.369 AM] error: 403 - email missing!!!
