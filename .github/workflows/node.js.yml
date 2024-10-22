@@ -23,5 +23,36 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
 
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build
+      run: npm run build --if-present
+
+    - name: Copy files
+      run: |
+        sudo mkdir -p /home/ubuntu/shopdev-backend  
+        sudo cp -r ./* /home/ubuntu/shopdev-backend/
+        sudo chown -R ubuntu:ubuntu /home/ubuntu/shopdev-backend
+        sudo chmod -R 755 /home/ubuntu/shopdev-backend
+
+    - name: Setup environment
+      env:
+          PORT: ${{ secrets.PORT }}
+          NODE_ENV: production
+      run: |
+          cd /home/ubuntu/shopdev-backend
+          echo "PORT=${PORT}" >> .env
+          echo "NODE_ENV=${NODE_ENV}" >> .env
+
+
+    - name: Install production dependencies
+      run: |
+        cd /home/ubuntu/shopdev-backend
+        npm ci --only=production
+
+    - name: Restart application
+      run: |
+        cd /home/ubuntu/shopdev-backend
+        pm2 restart shopdev-api 

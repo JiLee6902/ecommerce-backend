@@ -27,14 +27,19 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'session-userId',
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false } 
+    cookie: { secure: false }
 }));
 
 
 //init middleware
-app.use(morgan("dev"))
-app.use(helmet())
-app.use(compression())
+if (process.env.NODE_ENV === 'production') {
+    app.use(morgan("combined")) 
+    app.use(helmet())
+    app.use(compression())
+} else {
+    app.use(morgan("dev"))  
+    app.use(helmet())
+}
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
@@ -42,7 +47,7 @@ app.use(express.urlencoded({ extended: true }))
 // Tạo session ID cho người dùng khi đăng nhập
 app.use((req, res, next) => {
     if (!req.session.userId) {
-        req.session.userId = uuidv4(); 
+        req.session.userId = uuidv4();
     }
     console.log("req.session.userId:::", req.session.userId)
     next();
