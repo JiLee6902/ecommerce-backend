@@ -40,6 +40,17 @@ class AccessController {
         }).send(res);
     }
 
+    loginWithGoogle = async (req, res, next) => {
+        new SuccessResponse({
+            metadata: await AccessService.loginWithGoogle(req.body)
+        }).send(res);
+    }
+
+    loginWithFacebook = async (req, res, next) => {
+        new SuccessResponse({
+            metadata: await AccessService.loginWithFacebook(req.body)
+        }).send(res);
+    }
 
     signUpUser = async (req, res, next) => {
 

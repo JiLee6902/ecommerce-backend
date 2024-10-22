@@ -22,7 +22,7 @@ const uploadImageFromLocalS3 = async ({
             ContentType: 'image/jpeg'
         })
 
-        const result = await s3.send(command) 
+        const result = await s3.send(command) // for only s3
         const url = getSignedUrl({
             url: `${urlImagePublic}/${imageName}`,
             keyPairId: 'K2CCMLQ1DS69HN',

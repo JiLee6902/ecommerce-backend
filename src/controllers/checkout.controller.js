@@ -15,42 +15,48 @@ class CheckoutController {
     }
 
     getOneOrderByUser = async (req, res, next) => {
-        const { userId, orderId } = req.query;
         new SuccessResponse({
             message: 'Get one order success',
             metadata: await CheckoutService.getOneOrderByUser(
-                userId, orderId
+                {
+                    orderId: req.params.orderId,
+                    userId: req.params.userId
+                }
             )
         }).send(res);
     }
 
     getOrdersByUser = async (req, res, next) => {
-        const { userId } = req.query;
         new SuccessResponse({
             message: 'Get orders success',
             metadata: await CheckoutService.getOrdersByUser(
-                userId
+                {
+                    userId: req.params.userId
+                }
             )
         }).send(res);
     }
 
     cancelOrder = async (req, res, next) => {
-        const { userId, orderId } = req.body;
         new SuccessResponse({
             message: 'Cancel order success',
             metadata: await CheckoutService.cancelOrder(
-                userId, orderId
+                {
+                    orderId: req.params.orderId,
+                    userId: req.params.userId
+                }
             )
         }).send(res);
     }
 
     updateOrderStatus = async (req, res, next) => {
-        const { orderId } = req.query;
-        const {newStatus } = req.body;
         new SuccessResponse({
             message: 'Update status order success',
             metadata: await CheckoutService.updateOrderStatus(
-                orderId, newStatus
+                {
+                    orderId: req.params.orderId,
+                    newStatus: req.body.status
+                }
             )
         }).send(res);
     }

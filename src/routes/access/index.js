@@ -12,6 +12,8 @@ router.post('/user/signup', asyncHandler(accessController.signUpUser))
 router.post('/shop/login', asyncHandler(accessController.login))
 router.post('/user/login', asyncHandler(accessController.login))
 
+router.post('/user/login-google', asyncHandler(accessController.loginWithGoogle))
+router.post('/user/login-facebook', asyncHandler(accessController.loginWithFacebook))
 
 
 //authentication

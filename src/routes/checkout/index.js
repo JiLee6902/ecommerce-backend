@@ -12,10 +12,11 @@ const router = express.Router();
 router.post('/review', asyncHandler(checkoutController.checkoutReview))
 
 router.use(authenticationV2)
-router.get('/get-order', asyncHandler(checkoutController.getOneOrderByUser))
-router.get('/get-orders', asyncHandler(checkoutController.getOrdersByUser))
 
-router.patch('/cancel-order', asyncHandler(checkoutController.cancelOrder))
-router.patch('/update-status-order', asyncHandler(checkoutController.updateOrderStatus))
+router.get('/:orderId/:userId', asyncHandler(checkoutController.getOneOrderByUser));
+router.get('/:userId/get-all-orders', asyncHandler(checkoutController.getOrdersByUser));
+
+router.patch('/:orderId/:userId/cancel', asyncHandler(checkoutController.cancelOrder));
+router.patch('/:orderId/status', asyncHandler(checkoutController.updateOrderStatus));
 
 module.exports = router;

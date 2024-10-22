@@ -11,6 +11,8 @@ const { createTokenPair, verifyJWT } = require("../auth/authUtils")
 const { getInfoData } = require("../utils")
 const { BadRequestError, AuthFailureError, ForbiddenError } = require("../core/error.response");
 const { insertInventory } = require("../models/repositories/inventory.repo");
+const SocialAuthUtils = require("../auth/socialAuth");
+
 
 
 class AccessService {
@@ -126,6 +128,103 @@ class AccessService {
 
         const user = await userModel.findOne({ usr_email: email }).populate('usr_role');
         return user;
+    }
+
+    static loginWithGoogle = async ({ idToken }) => {
+        const googleData = await SocialAuthUtils.verifyGoogleToken(idToken)
+        const { email, name, picture } = googleData.getPayload();
+
+        if (!email) {
+            throw new BadRequestError('Email not provided by Google/Facebook');
+        }
+
+        let user = await userModel.findOne({ usr_email: email });
+        if (!user) {
+            const roleDoc = await roleModel.findOne({ rol_name: 'user' });
+            user = await userModel.create({
+                usr_name: name,
+                usr_email: email,
+                usr_avatar: picture,
+                usr_role: roleDoc._id,
+                usr_password: crypto.randomBytes(20).toString('hex'), 
+            });
+        }
+
+        const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
+            modulusLength: 4096,
+            publicKeyEncoding: { type: 'spki', format: 'pem' },
+            privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+        });
+
+        const tokens = await createTokenPair(
+            { userId: user._id, email: user.usr_email, role: 'user' },
+            publicKey,
+            privateKey
+        );
+
+        await KeyTokenService.createKeyToken({
+            userId: user._id,
+            refreshToken: tokens.refreshToken,
+            privateKey,
+            publicKey,
+            userModel: 'User'
+        });
+
+        return {
+            user: getInfoData({
+                fields: ['_id', 'usr_name', 'usr_email', 'usr_avatar'],
+                object: user
+            }),
+            tokens
+        };
+    }
+
+    static loginWithFacebook = async ({ accessToken }) => {
+        const { email, name, picture } = await SocialAuthUtils.verifyFacebookToken(accessToken)
+
+        if (!email) {
+            throw new BadRequestError('Email not provided by Google/Facebook');
+        }
+
+        let user = await userModel.findOne({ usr_email: email });
+        if (!user) {
+            const roleDoc = await roleModel.findOne({ rol_name: 'user' });
+            user = await userModel.create({
+                usr_name: name,
+                usr_email: email,
+                usr_avatar: picture.data.url,
+                usr_role: roleDoc._id,
+                usr_password: crypto.randomBytes(20).toString('hex'),
+            });
+        }
+
+        const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
+            modulusLength: 4096,
+            publicKeyEncoding: { type: 'spki', format: 'pem' },
+            privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+        });
+
+        const tokens = await createTokenPair(
+            { userId: user._id, email: user.usr_email, role: 'user' },
+            publicKey,
+            privateKey
+        );
+
+        await KeyTokenService.createKeyToken({
+            userId: user._id,
+            refreshToken: tokens.refreshToken,
+            privateKey,
+            publicKey,
+            userModel: 'User'
+        });
+
+        return {
+            user: getInfoData({
+                fields: ['_id', 'usr_name', 'usr_email', 'usr_avatar'],
+                object: user
+            }),
+            tokens
+        };
     }
 
 
