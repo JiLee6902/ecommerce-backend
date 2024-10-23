@@ -4,6 +4,7 @@
 
 const { model, Schema, Types } = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
+const { getNextSequence } = require('../utils/sequenceUtils');
 
 const DOCUMENT_NAME = 'User'
 const COLLECTION_NAME = 'Users'
@@ -61,7 +62,7 @@ const userSchema = new Schema({
     usr_status: {
         type: String,
         default: 'pending',
-        enum: ['pending', 'active', 'banned']
+        enum: ['pending', 'inactive', 'active', 'banned']
     },
     usr_addresses: [{
         street: String,
@@ -94,6 +95,12 @@ const userSchema = new Schema({
 });
 
 
+userSchema.pre('save', async function (next) {
+    if (this.isNew) {
+        this.usr_id = await getNextSequence('usr_id');
+    }
+    next();
+});
 
 module.exports =
     model(DOCUMENT_NAME, userSchema);

@@ -256,7 +256,6 @@ class Furniture extends Product {
 
         const updateProduct = await super.updateProduct(
             productId,
-            //update object lồng object cần tách ra như a.b.c sẽ không mất giá trị
             updateNestedObjectParser(objectParams),
         )
         return updateProduct

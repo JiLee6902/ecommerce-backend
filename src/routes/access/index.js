@@ -14,13 +14,13 @@ router.post('/user/login', asyncHandler(accessController.login))
 
 router.post('/user/login-google', asyncHandler(accessController.loginWithGoogle))
 router.post('/user/login-facebook', asyncHandler(accessController.loginWithFacebook))
-
+router.get('/verify-login/:verification_token', asyncHandler(accessController.verifySocialAccount))
 
 //authentication
 router.use(authenticationV2)
 
 router.post('/shop/logout', asyncHandler(accessController.logout))
-router.post('/shop/handlerRefreshToken', asyncHandler(accessController.handlerRefreshToken))
+router.post('/shop/handler_refresh_token', asyncHandler(accessController.handlerRefreshToken))
 
 
 

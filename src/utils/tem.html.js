@@ -578,8 +578,219 @@ const temNotificationEmail = () => {
 `
 }
 const temDLQNotiEmail = () => {
-`<h3>Failed to process notification message</h3>
+    `<h3>Failed to process notification message</h3>
 <p>{{content}}</p>`
+}
+
+const socialAuthVerificationTemplate = () => {
+    return `<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Verify Your Email</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                margin: 0;
+                padding: 0;
+                background-color: #f6f6f6;
+            }
+            .container {
+                max-width: 600px;
+                margin: 20px auto;
+                background-color: #ffffff;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+                background-color: #4285f4;
+                color: white;
+                padding: 20px;
+                text-align: center;
+                border-radius: 8px 8px 0 0;
+            }
+            .content {
+                padding: 20px;
+                color: #333;
+            }
+            .button {
+                display: inline-block;
+                padding: 12px 24px;
+                background-color: #4285f4;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                margin: 20px 0;
+            }
+            .footer {
+                text-align: center;
+                padding: 20px;
+                color: #666;
+                font-size: 12px;
+            }
+            .social-icon {
+                width: 24px;
+                height: 24px;
+                margin-right: 8px;
+                vertical-align: middle;
+            }
+            .warning {
+                background-color: #fff3cd;
+                border: 1px solid #ffeeba;
+                color: #856404;
+                padding: 12px;
+                border-radius: 4px;
+                margin: 20px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Verify Your Email Address</h1>
+            </div>
+            <div class="content">
+                <h2>Hello {{user_name}},</h2>
+                <p>Thank you for signing up with {{provider}}. To complete your registration and access your account, please verify your email address.</p>
+                
+                <div style="text-align: center;">
+                    <a href="{{verification_link}}" class="button">Verify Email Address</a>
+                </div>
+                
+                <div class="warning">
+                    <p><strong>Note:</strong> This verification link will expire in 24 hours.</p>
+                </div>
+                
+                <p>If you didn't request this verification, you can safely ignore this email.</p>
+                
+                <p>For security reasons, this link will expire in 24 hours. If you need a new verification link, please visit our website and request a new one.</p>
+            </div>
+            <div class="footer">
+                <p>&copy; 2024 Your Company Name. All rights reserved.</p>
+                <p>This email was sent to {{email}}</p>
+            </div>
+        </div>
+    </body>
+    </html>`
+}
+
+const socialAccountCredentialsTemplate = () => {
+    return `<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Your Account Information</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                margin: 0;
+                padding: 0;
+                background-color: #f6f6f6;
+            }
+            .container {
+                max-width: 600px;
+                margin: 20px auto;
+                background-color: #ffffff;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+                background-color: #4285f4;
+                color: white;
+                padding: 20px;
+                text-align: center;
+                border-radius: 8px 8px 0 0;
+            }
+            .content {
+                padding: 20px;
+                color: #333;
+            }
+            .credentials-box {
+                background-color: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 4px;
+                padding: 15px;
+                margin: 20px 0;
+            }
+            .important-note {
+                background-color: #fff3cd;
+                border: 1px solid #ffeeba;
+                color: #856404;
+                padding: 12px;
+                border-radius: 4px;
+                margin: 20px 0;
+            }
+            .login-button {
+                display: inline-block;
+                padding: 12px 24px;
+                background-color: #4285f4;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                margin: 20px 0;
+            }
+            .footer {
+                text-align: center;
+                padding: 20px;
+                color: #666;
+                font-size: 12px;
+                border-top: 1px solid #eee;
+            }
+            .security-tips {
+                background-color: #e9ecef;
+                padding: 15px;
+                border-radius: 4px;
+                margin: 20px 0;
+            }
+            .tip-item {
+                margin: 10px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Welcome to Our Platform!</h1>
+            </div>
+            <div class="content">
+                <h2>Hello {{user_name}},</h2>
+                <p>Your account has been successfully created. Below are your account details:</p>
+                
+                <div class="credentials-box">
+                    <p><strong>Username/Email:</strong> {{email}}</p>
+                    <p><strong>Initial Password:</strong> {{password}}</p>
+                </div>
+                
+                <div class="important-note">
+                    <h3>⚠️ Important Security Notice</h3>
+                    <p>For your security, we strongly recommend changing your password immediately after your first login.</p>
+                </div>
+                
+                <div style="text-align: center;">
+                    <a href="{{login_url}}" class="login-button">Login to Your Account</a>
+                </div>
+                
+                <div class="security-tips">
+                    <h3>Security Tips:</h3>
+                    <div class="tip-item">🔒 Choose a strong password that includes numbers, symbols, and mixed case letters</div>
+                    <div class="tip-item">🚫 Never share your password with anyone</div>
+                    <div class="tip-item">⚡ Enable two-factor authentication for extra security</div>
+                </div>
+                
+                <p>If you didn't create this account or have any questions, please contact our support team immediately.</p>
+            </div>
+            
+            <div class="footer">
+                <p>This is an automated message, please do not reply to this email.</p>
+                <p>&copy; 2024 Your Company Name. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>`
 }
 module.exports = {
     temLogin,
@@ -587,5 +798,7 @@ module.exports = {
     temForgotPassword,
     temOrderConfirmation,
     temNotificationEmail,
-    temDLQNotiEmail
+    temDLQNotiEmail,
+    socialAuthVerificationTemplate,
+    socialAccountCredentialsTemplate
 }

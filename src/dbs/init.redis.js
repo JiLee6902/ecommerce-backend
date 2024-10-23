@@ -56,17 +56,19 @@ const handleEventConnection = ({
 
 const initRedis = (options = {}) => {
     const defaultOptions = {
-        url: 'redis://redis:6379',
-        retry_strategy: (options) => { 
-            if (options.attempt > 10) {
-                return undefined;
-            }
-            return Math.min(options.attempt * 100, 3000);
-        }
+        url: 'redis://localhost:6379',
+        // retry_strategy: (options) => { 
+        //     if (options.attempt > 10) {
+        //         return undefined;
+        //     }
+        //     return Math.min(options.attempt * 100, 3000);
+        // }
     };
 
     const instanceRedis = redis.createClient({ ...defaultOptions, ...options });
-
+    instanceRedis.on('error', (err) => {
+        console.error('Redis Client Error', err);
+    });
     client.instanceConnect = instanceRedis;
     handleEventConnection({
         connectionRedis: instanceRedis

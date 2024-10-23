@@ -18,7 +18,7 @@ const sendEmailLinkVerify = async ({
 }) => {
     try {
         const mailOptions = {
-            from: ' "ShopDEV" <lqchi.service@gmail.com> ', 
+            from: ' "ShopDEV" <lqchi.service@gmail.com> ',
             to: toEmail,
             subject,
             text,
@@ -162,7 +162,7 @@ const sendEmailOrderShipping = async ({
         throw new Error('Failed to send order shipping email')
     }
 }
- 
+
 const sendEmailConfirmOrder = async ({
     email, action, productId, quantity
 }) => {
@@ -221,7 +221,77 @@ const sendEmailDQLNoti = async ({
     }
 }
 
+const sendEmailVerification = async ({
+    email,
+    replacements
+}) => {
+    try {
+        const template = await getTemplate({
+            tem_name: 'HTML EMAIL VERIFY'
+        })
+        if (!template) {
+            throw new NotFoundError('Không tìm thấy template')
+        }
 
+        const contentSend = replacePlaceHolder(
+            template.tem_html,
+            {
+                user_name: replacements.user_name,
+                verification_link: replacements.verification_link,
+                provider: replacements.provider,
+                email: email
+            }
+        )
+        await sendEmailLinkVerify({
+            html: contentSend,
+            toEmail: email,
+            subject: 'Verify Your Email Address',
+        })
+
+    } catch (error) {
+        console.error('Lỗi gửi email:', error)
+        throw new Error('Failed to send email')
+    }
+}
+
+const sendAccountForGoogleAndFacebook = async ({
+    username,
+    email,
+    password,
+    loginUrl = `http://localhost:3000/login`
+}) => {
+    try {
+        const template = await getTemplate({
+            tem_name: 'HTML NEW ACCOUNT'
+        })
+        if (!template) {
+            throw new NotFoundError('Không tìm thấy template')
+        }
+        const htmlContent = socialAccountCredentialsTemplate()
+            .replace('{{user_name}}', username)
+            .replace('{{email}}', email)
+            .replace('{{password}}', password)
+            .replace('{{login_url}}', loginUrl);
+
+        const contentSend = replacePlaceHolder(
+            template.tem_html,
+            {
+                user_name: user_name,
+                email: email,
+                password: password,
+                login_url: loginUrl
+            }
+        )
+        await sendEmailLinkVerify({
+            html: contentSend,
+            toEmail: email,
+            subject: 'Your New Account Information',
+        });
+    } catch (error) {
+        console.error('Lỗi gửi email:', error)
+        throw new Error('Failed to send email')
+    }
+}
 
 module.exports = {
     sendEmailToken,
@@ -229,6 +299,8 @@ module.exports = {
     sendEmailForgotPassword,
     sendEmailOrderShipping,
     sendEmailConfirmOrder,
-    sendEmailDQLNoti
+    sendEmailDQLNoti,
+    sendEmailVerification,
+    sendAccountForGoogleAndFacebook
 }
 

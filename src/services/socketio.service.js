@@ -2,19 +2,14 @@
 
 const socketIo = require('socket.io');
 const { promisify } = require('util');
-const { getRedis } = require('../dbs/init.redis');
+const { getIORedis } = require('../dbs/init.ioredis');
 const userModel = require('../models/user.model');
 const { convertToObjectIdMongoDb } = require('../utils');
 const shopModel = require('../models/shop.model');
 const NotificationRabbit = require('./notification.rabbit');
 const MessageService = require('./message.service');
-const {
-    instanceConnect: redisClient
-} = getRedis()
 
-const sAddAsync = promisify(redisClient.sAdd).bind(redisClient);
-const sMemberAsync = promisify(redisClient.sMembers).bind(redisClient);
-const sRemAsync = promisify(redisClient.sRem).bind(redisClient);
+const redisClient = getIORedis().instanceConnect;
 
 class SocketIOService {
     static io;
@@ -64,11 +59,11 @@ class SocketIOService {
         const { userId, userType } = await this.#getUserInfo(user.userId);
 
         const key = `noti-${userType}:${userId}:sockets`;
-        await sAddAsync(key, socket.id);
+        await redisClient.sadd(key, socket.id); 
 
         socket.on('joinRoom', async (roomId) => {
             socket.join(roomId);
-            await MessageService.markMessagesAsRead(roomId, userId)
+            await MessageService.markMessagesAsRead(roomId, userId);
         });
 
         socket.on('leaveRoom', (roomId) => {
@@ -77,8 +72,8 @@ class SocketIOService {
 
         socket.on('sendMessage', async (data) => {
             const { roomId, content } = data;
-            const message = await MessageService.sendMessage(roomId, userId, userType, content)
-            this.io.to(roomId).emit('newMessage', message)
+            const message = await MessageService.sendMessage(roomId, userId, userType, content);
+            this.io.to(roomId).emit('newMessage', message);
         });
 
         socket.on('disconnect', () => this.handleDisconnect(socket));
@@ -90,13 +85,13 @@ class SocketIOService {
 
         if (userId) {
             const key = `noti-${userType}:${userId}:sockets`;
-            await sRemAsync(key, socket.id);
+            await redisClient.srem(key, socket.id); 
         }
     }
 
     static async sendNotification(recipientId, recipientType, data) {
         const key = `noti-${recipientType}:${recipientId}:sockets`;
-        const socketIds = await sMemberAsync(key);
+        const socketIds = await redisClient.smembers(key); 
 
         if (socketIds.length > 0) {
             const dataArray = Array.isArray(data) ? data : [data];

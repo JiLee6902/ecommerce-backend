@@ -14,6 +14,7 @@ const { checkEmailToken } = require("./otp.service");
 const bcrypt = require('bcrypt')
 const crypto = require('crypto')
 const { sendEmailForgotPassword } = require("./email.service");
+const roleModel = require("../models/role.model");
 
 
 
@@ -45,7 +46,6 @@ const checkLoginEmailTokenService = async ({
 }) => {
     try {
         const { email, tokenResult } = await checkEmailToken({ token })
-        console.log("EMAIL::", email)
         if (!email) {
             throw new BadRequestError('Should enter your email again, please!')
         }
@@ -53,15 +53,16 @@ const checkLoginEmailTokenService = async ({
         const hasUser = await findUserByEmailWithLogin({ email })
         if (hasUser) throw new BadRequestError('email already exist!')
 
-
+        const roleUser = await roleModel.findOne({
+            rol_name: 'user'
+        })
         const passwordHash = await bcrypt.hash(email, 10)
         const newUser = await createUser({
-            usr_id: 1,
             usr_slug: 'xyz',
             usr_name: email,
             usr_password: passwordHash,
             usr_email: email,
-            usr_role: '669e1bd06185fbc252187163'
+            usr_role: convertToObjectIdMongoDb(roleUser._id)
         })
 
 

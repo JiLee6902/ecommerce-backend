@@ -26,8 +26,8 @@ const shopSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ['active', 'inactive'],
-        default: 'inactive',
+        enum: ['pending', 'active', 'inactive','banned'],
+        default: 'active',
     },
     verify: {
         type: Schema.Types.Boolean,

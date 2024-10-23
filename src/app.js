@@ -7,12 +7,12 @@ const { default: helmet } = require('helmet')
 const { v4: uuidv4 } = require('uuid')
 const myLogger = require('./loggers/mylogger.log')
 const cors = require('cors');
+const startWorkers = require('./utils/workers');
 const app = express();
 const http = require('http');
-const initElasticsearch = require('./dbs/init.elasticsearch');
-const elasticsearchService = require('./services/elasticsearch.service');
-const SocketIOService = require('./services/socketio.service')
-const startWorkers = require('./utils/workers');
+
+
+
 
 const corsOptions = {
     origin: process.env.CLIENT_ORIGIN,
@@ -22,8 +22,10 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+
 //config session
 app.use(session({
+
     secret: process.env.SESSION_SECRET || 'session-userId',
     resave: false,
     saveUninitialized: true,
@@ -33,11 +35,11 @@ app.use(session({
 
 //init middleware
 if (process.env.NODE_ENV === 'production') {
-    app.use(morgan("combined")) 
+    app.use(morgan("combined"))
     app.use(helmet())
     app.use(compression())
 } else {
-    app.use(morgan("dev"))  
+    app.use(morgan("dev"))
     app.use(helmet())
 }
 app.use(express.json())
@@ -45,48 +47,31 @@ app.use(express.urlencoded({ extended: true }))
 
 
 // Tạo session ID cho người dùng khi đăng nhập
-app.use((req, res, next) => {
-    if (!req.session.userId) {
-        req.session.userId = uuidv4();
-    }
-    console.log("req.session.userId:::", req.session.userId)
-    next();
-});
+// app.use((req, res, next) => {
+//     if (!req.session.userId) {
+//         req.session.userId = uuidv4();
+//     }
+//     console.log("req.session.userId:::", req.session.userId)
+//     next();
+// });
 
 
-app.use((req, res, next) => {
-    const requestId = req.headers['x-request-id'] //proxy 
-    req.requestId = requestId ? requestId : uuidv4();
-    console.log(" req.requestId :::", req.requestId);
+// app.use((req, res, next) => {
+//     const requestId = req.headers['x-request-id'] //proxy 
+//     req.requestId = requestId ? requestId : uuidv4();
+//     console.log(" req.requestId :::", req.requestId);
 
-    myLogger.log('Request received', {
-        sessionId: req.session.userId,
-        requestId: req.requestId,
-        context: req.path,
-        metadata: req.method === 'POST' ? req.body : req.query
-    });
-    next()
-})
+//     myLogger.log('Request received', {
+//         sessionId: req.session.userId,
+//         requestId: req.requestId,
+//         context: req.path,
+//         metadata: req.method === 'POST' ? req.body : req.query
+//     });
+//     next()
+// })
 
-
-
-
-// *** init db ***
-//init mongo
-require('./dbs/init.mongodb')
-
-
-//init redis
-const initRedis = require('./dbs/init.redis')
-initRedis.initRedis()
-
-//init ioredis
-const initIORedis = require('./dbs/init.ioredis');
-initIORedis.initIORedis({
-    IOREDIS_IS_ENABLED: true
-})
-
-
+const initElasticsearch = require('./dbs/init.elasticsearch');
+const elasticsearchService = require('./services/elasticsearch.service');
 //init elastic search  
 initElasticsearch.initEs({
     ELASTICSEARCH_IS_ENABLED: true
@@ -104,9 +89,28 @@ async function initializeElasticsearch() {
     }
 }
 initializeElasticsearch();
-
 //rabbitMQ
 startWorkers();
+
+// *** init db ***
+//init mongo
+require('./dbs/init.mongodb')
+//init redis
+const initRedis = require('./dbs/init.redis')
+initRedis.initRedis()
+
+//init ioredis
+const initIORedis = require('./dbs/init.ioredis');
+initIORedis.initIORedis({
+    IOREDIS_IS_ENABLED: true
+})
+
+
+
+
+
+
+
 
 
 
@@ -119,6 +123,7 @@ startWorkers();
 app.use('/', require('./routes'))
 
 // socketIO
+const SocketIOService = require('./services/socketio.service')
 const server = http.createServer(app);
 SocketIOService.init(server)
 

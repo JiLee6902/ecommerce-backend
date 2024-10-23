@@ -7,7 +7,6 @@ const { User } = require('../models/user.model');
 const { Shop } = require('../models/shop.model');
 const EmailService = require('./email.service');
 const { promisify } = require('util');
-const { promisify } = require('util');
 const { getRedis } = require('../dbs/init.redis');
 const {
     instanceConnect: redisClient

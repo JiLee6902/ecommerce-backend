@@ -4,6 +4,9 @@
 const { BadRequestError } = require('../core/error.response');
 const RESOURCE = require('../models/resource.model');
 const ROLE = require('../models/role.model');
+const SHOP = require('../models/shop.model');
+
+const staffModel = require('../models/staff.model');
 const USER = require('../models/user.model');
 /**
  * new resouce
@@ -62,9 +65,9 @@ const resourceList = async ({
 
 
 const createRole = async ({
-    name = 'shop',
-    slug = 's0001',
-    description = 'extend from shop or user',
+    name = '',
+    slug = '',
+    description = '',
     grants = []
 }) => {
     try {
@@ -80,6 +83,21 @@ const createRole = async ({
     }
 }
 
+const updateRole = async ({
+    rol_name ,rol_grants 
+}) => {
+    try {
+        const role = await ROLE.updateOne(
+            { rol_name: rol_name },
+            { $push: { rol_grants: { $each: rol_grants } } } 
+        );
+        return role;
+    } catch (error) {
+        return error;
+    }
+}
+
+
 
 const roleList = async ({
     userId = 0,
@@ -88,12 +106,29 @@ const roleList = async ({
     search = ''
 }) => {
     try {
-    
-        const user = await USER.findById(userId);
-        if(!user) throw new BadRequestError("User not found!")
+        const models = [USER, SHOP, staffModel];
+        const roles = ['usr_role', 'role', 'staff_role'];
+
+        let roleName ;
+        for (let i = 0; i < models.length; i++) {
+            const model = models[i];
+            const roleField = roles[i];
+            const account = await model.findById(userId);
+
+            if (account) {
+                roleName = account[roleField];
+                break; 
+            }
+        }
+        const role = await ROLE.findOne({
+            rol_name: roleName
+        })
+
+        if (!role) throw new BadRequestError("Not exist this role in the system")
+
         const roleList = await ROLE.aggregate([
             {
-                $match: { _id: { $in: user.usr_roles } }
+                $match: { _id: { $in: role._id } }
             },
             {
                 $unwind: "$rol_grants"
@@ -129,9 +164,11 @@ const roleList = async ({
     }
 }
 
+
 module.exports = {
     createResource,
     resourceList,
     createRole,
-    roleList
+    roleList,
+    updateRole
 }

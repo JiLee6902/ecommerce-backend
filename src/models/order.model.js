@@ -61,7 +61,7 @@ const orderSchema = new Schema({
     collection: COLLECTION_NAME
 });
 
-skuSchema.index({ order_trackingNumber: 1 });
+orderSchema.index({ order_trackingNumber: 1 });
 
 
 

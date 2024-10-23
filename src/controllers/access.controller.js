@@ -41,14 +41,45 @@ class AccessController {
     }
 
     loginWithGoogle = async (req, res, next) => {
+        const { idToken } = req.body;
+        if (!idToken) {
+            throw new BadRequestError('Google ID token is required');
+        }
+
+        const result = await AccessService.loginWithGoogle({ idToken });
+
+        if (result.status === 'VERIFICATION_NEEDED') {
+            return new SuccessResponse({
+                message: result.message,
+                metadata: { status: result.status }
+            }).send(res);
+        }
+
         new SuccessResponse({
-            metadata: await AccessService.loginWithGoogle(req.body)
+            message: 'Login with Google successful',
+            metadata: result
         }).send(res);
+
     }
 
     loginWithFacebook = async (req, res, next) => {
+        const { accessToken } = req.body;
+        if (!accessToken) {
+            throw new BadRequestError('Facebook access token is required');
+        }
+
+        const result = await AccessService.loginWithFacebook({ accessToken });
+        
+        if (result.status === 'VERIFICATION_NEEDED') {
+            return new SuccessResponse({
+                message: result.message,
+                metadata: { status: result.status }
+            }).send(res);
+        }
+
         new SuccessResponse({
-            metadata: await AccessService.loginWithFacebook(req.body)
+            message: 'Login with Facebook successful',
+            metadata: result
         }).send(res);
     }
 
@@ -75,6 +106,21 @@ class AccessController {
         }).send(res);
 
     }
+
+    verifySocialAccount = async (req, res, next) => {
+        const { verificationToken } = req.params;
+        if (!verificationToken) {
+            throw new BadRequestError('Verification token is required');
+        }
+
+        const result = await AccessService.verifyAndCreateSocialAccount({ verificationToken });
+        
+        new SuccessResponse({
+            message: 'Social account verified and created successfully',
+            metadata: result
+        }).send(res);
+    }
+
 }
 
 module.exports = new AccessController();

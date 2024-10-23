@@ -1,18 +1,18 @@
 'use strict'
 
+const { acquireLock, releaseLock } = require("./redis.service")
 const { BadRequestError } = require("../core/error.response")
 const { discount } = require("../models/discount.model")
 const { order } = require("../models/order.model")
 const userModel = require("../models/user.model")
 const { findCartById } = require("../models/repositories/cart.repo")
 const { v4: uuidv4 } = require('uuid');
-
 const { checkProductByServer } = require("../models/repositories/product.repo")
 const { convertToObjectIdMongoDb } = require("../utils")
 const { publishInventoryUpdate, publishOrderCreated, publishEmailSend, publishNotification, publishOrderSuccessed } = require("../utils/rabbitmqProducer")
 const { getDiscountAmount } = require("./discount.service")
 const { sendEmailOrderShipping } = require("./email.service")
-const { acquireLock, releaseLock } = require("./redis.service")
+
 const { forEach } = require("lodash")
 
 class CheckoutService {
@@ -177,7 +177,7 @@ class CheckoutService {
             ({ cartId, userId, shop_order_ids })
 
         const products = shop_order_ids_new.flatMap(order => order.item_products.map(product => ({
-            ... product,
+            ...product,
             shopId: order.shopId
         })))
         const acquireProduct = []
@@ -314,7 +314,7 @@ class CheckoutService {
                     _id: {
                         shopId: '$order_products.shopId',
                     },
-                    products: { 
+                    products: {
                         $push: {
                             productId: '$order_products.item_products.productId',
                             price: '$order_products.item_products.price',
@@ -327,7 +327,7 @@ class CheckoutService {
                 $project: {
                     shopId: '$_id.shopId',
                     products: 1,
-                    _id: 0 
+                    _id: 0
                 }
             }
         ]);
@@ -366,7 +366,7 @@ class CheckoutService {
         });
 
         if (newOrder) {
-  
+
             for (let i = 0; i < products.length; i++) {
                 const { productId, quantity } = products[i];
                 await inventory.findOneAndUpdate(
@@ -416,7 +416,7 @@ class CheckoutService {
             }
 
             if (!['pending'].includes(existingOrder.order_status)) {
-                throw new BadRequestError('Cannot 3cancel this order at its current status.');
+                throw new BadRequestError('Cannot cancel this order.');
             }
 
             existingOrder.order_status = 'cancelled';
@@ -448,7 +448,7 @@ class CheckoutService {
     /*[Shop] */
     static async updateOrderStatus({ orderId, newStatus }) {
         try {
-            const existingOrder = await order.findOne({ _id: convertToObjectIdMongoDb(orderId)});
+            const existingOrder = await order.findOne({ _id: convertToObjectIdMongoDb(orderId) });
             if (!existingOrder) {
                 throw new BadRequestError('Order not found');
             }

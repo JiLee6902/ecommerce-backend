@@ -88,6 +88,10 @@ services:
     container_name: shopdev_redis
     networks:
       - shopdev_network
+    environment:
+      - REDIS_HOST=redis 
+      - IOREDIS_HOST=redis
+      - IOREDIS_PORT=6379=value
     ports:
       - "6379:6379"
     volumes:

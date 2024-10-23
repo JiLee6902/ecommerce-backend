@@ -1,7 +1,7 @@
 'use strict'
 
 const NotificationRabbit = require('../../services/notification.rabbit');
-const { setupRabbitMQ, queues } = require('../utils/rabbitmqConfig');
+const { setupRabbitMQ, queues } = require('../rabbitmqConfig');
 
 
 const notificationConsumer = async () => {

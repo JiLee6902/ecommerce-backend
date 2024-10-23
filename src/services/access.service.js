@@ -12,6 +12,10 @@ const { getInfoData } = require("../utils")
 const { BadRequestError, AuthFailureError, ForbiddenError } = require("../core/error.response");
 const { insertInventory } = require("../models/repositories/inventory.repo");
 const SocialAuthUtils = require("../auth/socialAuth");
+const { sendAccountForGoogleAndFacebook, sendEmailVerification } = require("./email.service");
+const otpModel = require("../models/otp.model");
+const staffModel = require("../models/staff.model");
+
 
 
 
@@ -31,7 +35,7 @@ class AccessService {
         if (!foundAccount) throw new AuthFailureError('Account not registered');
 
         const role = foundAccount.role ? 'shop' : (foundAccount.usr_role.rol_name || 'user');
-    
+
         const tokens = await createTokenPair(
             { userId, email, role }, publicKey, privateKey
         )
@@ -40,7 +44,7 @@ class AccessService {
             $set: {
                 refreshToken: tokens.refreshToken
             },
-            $addToSet: { 
+            $addToSet: {
                 refreshTokensUsed: refreshToken
             }
         })
@@ -59,7 +63,7 @@ class AccessService {
         await keytokenModel.findOneAndUpdate(filter, update, options);
         const delKey = await KeyTokenService.removeKeyById(keyStore._id)
 
-    
+
         req.session.destroy((err) => {
             if (err) {
                 myLogger.error('Logout failed', {
@@ -74,7 +78,7 @@ class AccessService {
                 requestId: req.requestId,
                 context: '/logout'
             });
-            res.clearCookie('connect.sid');          
+            res.clearCookie('connect.sid');
         });
 
         return delKey;
@@ -107,7 +111,7 @@ class AccessService {
             { userId, email, role }, publicKey, privateKey
         )
 
-     
+
         await KeyTokenService.createKeyToken({
             userId,
             refreshToken: tokens.refreshToken,
@@ -130,26 +134,7 @@ class AccessService {
         return user;
     }
 
-    static loginWithGoogle = async ({ idToken }) => {
-        const googleData = await SocialAuthUtils.verifyGoogleToken(idToken)
-        const { email, name, picture } = googleData.getPayload();
-
-        if (!email) {
-            throw new BadRequestError('Email not provided by Google/Facebook');
-        }
-
-        let user = await userModel.findOne({ usr_email: email });
-        if (!user) {
-            const roleDoc = await roleModel.findOne({ rol_name: 'user' });
-            user = await userModel.create({
-                usr_name: name,
-                usr_email: email,
-                usr_avatar: picture,
-                usr_role: roleDoc._id,
-                usr_password: crypto.randomBytes(20).toString('hex'), 
-            });
-        }
-
+    static async handleExistingSocialLogin(user) {
         const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
             modulusLength: 4096,
             publicKeyEncoding: { type: 'spki', format: 'pem' },
@@ -177,6 +162,60 @@ class AccessService {
             }),
             tokens
         };
+    }
+
+    static loginWithGoogle = async ({ idToken }) => {
+        const googleData = await SocialAuthUtils.verifyGoogleToken(idToken)
+        const { email, name, picture } = googleData.getPayload();
+
+        if (!email) {
+            throw new BadRequestError('Email not provided by Google/Facebook');
+        }
+        const array = ['userModel', 'shopModel', 'staffModel']
+        const mail = ['usr_email', 'email', 'staff_email']
+        for (let i = 0; i < array.length; i++) {
+            const model = array[i];
+            const attribute = mail[i];
+            const account = await model.findOne({ [attribute]: email }).lean();
+            if (account) {
+                return AccessService.handleExistingSocialLogin(account);
+            }
+        }
+
+        const otpToken = crypto.randomBytes(32).toString('hex');
+        await otpModel.create({
+            otp_token: otpToken,
+            otp_email: email,
+            otp_status: 'pending',
+            expireAt: new Date(Date.now() + 2 * 60 * 60 * 1000)
+        });
+
+        const redisClient = getIORedis().instanceConnect;
+        await redisClient.set(
+            `social_auth-${otpToken}`,
+            JSON.stringify({
+                name,
+                email,
+                picture,
+                provider: 'google'
+            }),
+            2 * 60 * 60
+        );
+
+        await sendEmailVerification({
+            email,
+            replacements: {
+                user_name: name,
+                verification_link: `http://localhost:3000//verify-social-account?token=${otpToken}`,
+                provider: 'Google'
+            }
+        })
+
+        return {
+            status: 'VERIFICATION_NEEDED',
+            message: 'Please check your email to complete registration'
+        }
+
     }
 
     static loginWithFacebook = async ({ accessToken }) => {
@@ -185,18 +224,86 @@ class AccessService {
         if (!email) {
             throw new BadRequestError('Email not provided by Google/Facebook');
         }
-
-        let user = await userModel.findOne({ usr_email: email });
-        if (!user) {
-            const roleDoc = await roleModel.findOne({ rol_name: 'user' });
-            user = await userModel.create({
-                usr_name: name,
-                usr_email: email,
-                usr_avatar: picture.data.url,
-                usr_role: roleDoc._id,
-                usr_password: crypto.randomBytes(20).toString('hex'),
-            });
+        const array = ['userModel', 'shopModel', 'staffModel']
+        const mail = ['usr_email', 'email', 'staff_email']
+        for (let i = 0; i < array.length; i++) {
+            const model = array[i];
+            const attribute = mail[i];
+            const account = await model.findOne({ [attribute]: email }).lean();
+            if (account) {
+                return AccessService.handleExistingSocialLogin(account);
+            }
         }
+
+        const otpToken = crypto.randomBytes(32).toString('hex');
+        await otpModel.create({
+            otp_token: otpToken,
+            otp_email: email,
+            otp_status: 'pending',
+            expireAt: new Date(Date.now() +  60 * 60 * 1000)
+        });
+
+        const redisClient = getIORedis().instanceConnect;
+        await redisClient.set(
+            `social_auth-${otpToken}`,
+            JSON.stringify({
+                name,
+                email,
+                picture,
+                provider: 'facebook'
+            }),
+             60 * 60
+        );
+
+        await sendEmailVerification({
+            email,
+            replacements: {
+                user_name: name,
+                verification_link: `http://localhost:3000/verify-social-account?token=${otpToken}`,
+                provider: 'Google'
+            }
+        })
+
+        return {
+            status: 'VERIFICATION_NEEDED',
+            message: 'Please check your email to complete registration'
+        }
+
+    }
+
+    static async verifyAndCreateSocialAccount({ verificationToken }) {
+        const otp = await otpModel.findOne({ 
+            otp_token: verificationToken,
+            otp_status: 'pending'
+        });
+        
+        if (!otp) {
+            throw new BadRequestError('Expired verification token');
+        }
+
+        const redisClient = getIORedis().instanceConnect;
+        const userData = await redisClient.get(`social_auth-${verificationToken}`);
+        if (!userData) {
+            throw new BadRequestError('Verification expired');
+        }
+
+        const { name, email, picture, provider } = JSON.parse(userData);
+
+        const roleDoc = await roleModel.findOne({ rol_name: 'user' });
+        if (!roleDoc) {
+            throw new BadRequestError('User role not found');
+        }
+
+        const hashedPassword = await bcrypt.hash(email, 10);
+        const user = await userModel.create({
+            usr_name: name,
+            usr_email: email,
+            usr_avatar: picture,
+            usr_role: roleDoc._id,
+            usr_password: hashedPassword,
+            usr_status: 'active',
+            usr_provider: provider
+        });
 
         const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
             modulusLength: 4096,
@@ -218,6 +325,17 @@ class AccessService {
             userModel: 'User'
         });
 
+        await otpModel.updateOne(
+            { otp_token: verificationToken },
+            { otp_status: 'active' }
+        );
+
+        await sendAccountForGoogleAndFacebook({
+            username: name,
+            email: email,
+            password: email 
+        });
+
         return {
             user: getInfoData({
                 fields: ['_id', 'usr_name', 'usr_email', 'usr_avatar'],
@@ -226,7 +344,6 @@ class AccessService {
             tokens
         };
     }
-
 
 
     static async signUpUser({
@@ -319,8 +436,8 @@ class AccessService {
 
         if (newShop) {
 
-            await inventory.findOneAndUpdate({inven_shopId: newShop._id}, {new: true, upsert: true})
-           
+            await inventory.findOneAndUpdate({ inven_shopId: newShop._id }, { new: true, upsert: true })
+
             const privateKey = crypto.randomBytes(64).toString('hex');
             const publicKey = crypto.randomBytes(64).toString('hex');
 

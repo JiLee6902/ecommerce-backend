@@ -5,8 +5,8 @@ const { model, Schema, Types } = require('mongoose');
 const { product } = require('./product.model');
 const { convertToObjectIdMongoDb } = require('../utils');
 
-const DOCUMENT_NAME = 'Shop'
-const COLLECTION_NAME = 'Shops'
+const DOCUMENT_NAME = 'ShopSale'
+const COLLECTION_NAME = 'ShopSales'
 
 
 

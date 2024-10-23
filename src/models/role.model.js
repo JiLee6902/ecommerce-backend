@@ -23,7 +23,7 @@ const roleSchema = new Schema({
     rol_name: {
         type: String,
         default: 'user',
-        enum: ['user', 'shop', 'admin']
+        enum: ['user', 'shop', 'admin', 'staff']
     },
     rol_slug: {
         type: String,
