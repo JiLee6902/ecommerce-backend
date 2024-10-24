@@ -18,11 +18,11 @@ router.post('/update-profile', grantAccess('updateOwn', 'staff'), asyncHandler(s
 router.patch('/change-password', grantAccess('updateOwn', 'staff'), asyncHandler(staffController.changePassword));
 
 //shop 
-router.post('/create', grantAccess('createAny', 'staff'), asyncHandler(staffController.createStaff));
-router.get('/stats', grantAccess('readAny', 'staff'), asyncHandler(staffController.getStaffStats));
-router.patch('/ban/:staffId', grantAccess('updateAny', 'staff', { strict: true }), asyncHandler(staffController.banStaff));
-router.patch('/unban/:staffId', grantAccess('updateAny', 'staff', { strict: true }), asyncHandler(staffController.unbanStaff));
+router.post('/create', grantAccess('createOwn', 'staff'), asyncHandler(staffController.createStaff));
+router.get('/stats', grantAccess('readOwn', 'staff'), asyncHandler(staffController.getStaffStats));
+router.patch('/ban/:staffId', grantAccess('updateOwn', 'staff', { strict: true }), asyncHandler(staffController.banStaff));
+router.patch('/unban/:staffId', grantAccess('updateOwn', 'staff', { strict: true }), asyncHandler(staffController.unbanStaff));
 router.post('/transfer/:staffId', grantAccess('updateAny', 'staff', { strict: true }), asyncHandler(staffController.transferStaff));
-router.patch('/status/:staffId', grantAccess('updateAny', 'staff', { strict: true }), asyncHandler(staffController.updateStaffStatus));
+router.patch('/status/:staffId', grantAccess('updateOwn', 'staff', { strict: true }), asyncHandler(staffController.updateStaffStatus));
 
 module.exports = router;

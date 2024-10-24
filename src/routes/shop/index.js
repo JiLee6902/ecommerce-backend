@@ -15,5 +15,10 @@ router.post('/update-profile',asyncHandler(shopController.updateProfile))
 router.patch('/change-password',asyncHandler(shopController.changePassword))
 router.put('/forgot-password',asyncHandler(shopController.forgotPassword))
 router.put('/reset-password',asyncHandler(shopController.resetPassword))
+router.get('/analytics',asyncHandler(shopController.getShopAnalytics))
+router.put('/update-status',asyncHandler(shopController.updateShopStatus))
+router.get('/advance-analytics',asyncHandler(shopController.getDetailedShopAnalytics))
+router.get('/inventory-analytics',asyncHandler(shopController.getInventoryAnalytics))
+
 
 module.exports = router;

@@ -47,6 +47,47 @@ class ShopController {
               ) 
         }).send(res);
     }
+
+    updateShopStatus = async (req, res, next) => {
+        new SuccessResponse({
+            message: 'Update shop status',
+            metadata: await updateShopStatus({
+                shopId: req.body.shopId,
+                status: req.body.status
+            })
+        }).send(res);
+    }
+
+    getShopAnalytics = async (req, res, next) => {
+        new SuccessResponse({
+            message: 'Shop analytics basic',
+            metadata: await getShopAnalytics(
+                req.user.userId,
+            )
+        }).send(res);
+    }
+
+
+    getDetailedShopAnalytics = async (req, res, next) => {
+        new SuccessResponse({
+            message: 'Shop analytics advance',
+            metadata: await getDetailedShopAnalytics(
+                req.user.userId,
+            )
+        }).send(res);
+    }
+
+    getInventoryAnalytics = async (req, res, next) => {
+        new SuccessResponse({
+            message: 'Shop analytics advance',
+            metadata: await getInventoryAnalytics(
+                req.user.userId,
+            )
+        }).send(res);
+    }
+
+
+
 }
 
 module.exports = new ShopController()

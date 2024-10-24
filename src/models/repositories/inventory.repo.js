@@ -80,6 +80,7 @@ const reservationInventory = async ({ productId, quantity, cartId, shopId }) => 
     return existingInventory;
 }
 
+// cancel order
 const updateInventory = async ({ data }) => {
 
     const updatePromises = data.map(async (item) => {

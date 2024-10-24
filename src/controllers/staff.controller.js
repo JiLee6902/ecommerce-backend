@@ -68,7 +68,7 @@ class StaffController {
         new SuccessResponse({
             message: 'Staff banned successfully',
             metadata: await banStaff({
-                shopId: req.user.shopId,
+                shopId: req.user.userId,
                 staffId: req.params.staffId
             })
         }).send(res)
@@ -78,7 +78,7 @@ class StaffController {
         new SuccessResponse({
             message: 'Staff unbanned successfully',
             metadata: await unbanStaff({
-                shopId: req.user.shopId,
+                shopId: req.user.userId,
                 staffId: req.params.staffId
             })
         }).send(res)
@@ -87,7 +87,7 @@ class StaffController {
     getStaffStats = async (req, res, next) => {
         new SuccessResponse({
             message: 'Staff statistics retrieved',
-            metadata: await getStaffStats(req.user.shopId)
+            metadata: await getStaffStats(req.user.userId)
         }).send(res)
     }
 
