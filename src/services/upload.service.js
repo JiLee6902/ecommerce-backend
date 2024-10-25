@@ -10,21 +10,22 @@ const urlImagePublic = `https://d1w35hv77zm0f2.cloudfront.net`
 
 
 const uploadImageFromLocalS3 = async ({
-    file
+    file,
+    folderName = 'default-folder' 
 }) => {
     try {
 
         const imageName = randomImageName();
         const command = new PutObjectCommand({
             Bucket: process.env.AWS_BUCKET_NAME,
-            Key: imageName, 
+            Key:`${folderName}/${imageName}`, 
             Body: file.buffer,
             ContentType: 'image/jpeg'
         })
 
-        const result = await s3.send(command) // for only s3
+       await s3.send(command) // for only s3
         const url = getSignedUrl({
-            url: `${urlImagePublic}/${imageName}`,
+            url: `${urlImagePublic}/${folderName}/${imageName}`,
             keyPairId: 'K2CCMLQ1DS69HN',
             dateLessThan: new Date(Date.now() + 1000 * 120),
             privateKey: process.env.AWS_BUCKET_PRIVATE_KEY_ID
@@ -63,7 +64,7 @@ const uploadImageFromUrl = async () => {
 
 const uploadImageFromLocal = async ({
     file,
-    folderName = 'product/8409'
+    folderName 
 }) => {
     try {
 
@@ -89,7 +90,7 @@ const uploadImageFromLocal = async ({
 
 const uploadImageFromLocalFiles = async ({
     files,
-    folderName = 'product/8409'
+    folderName 
 }) => {
     try {
 

@@ -20,13 +20,34 @@ const roomSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Message'
     },
-    isActive: {
+    unreadCount: {
+        user: { type: Number, default: 0 },
+        shop: { type: Number, default: 0 }
+    },
+    isDeleted: {
         type: Boolean,
-        default: true
+        default: false
+    },
+    deletedBy: {
+        type: Schema.Types.ObjectId,
+        refPath: 'deletedByType'
+    },
+    deletedByType: {
+        type: String,
+        enum: ['user', 'shop']
+    },
+    deletedAt: {
+        type: Date
     }
 }, {
     timestamps: true,
     collection: COLLECTION_NAME
 });
+
+roomSchema.index({ user: 1, shop: 1 });
+roomSchema.index({ lastUserActivity: 1 });
+roomSchema.index({ lastShopActivity: 1 });
+roomSchema.index({ isDeleted: 1 });
+
 
 module.exports = model(DOCUMENT_NAME, roomSchema);

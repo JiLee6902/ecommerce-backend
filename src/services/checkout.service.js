@@ -9,11 +9,12 @@ const { findCartById } = require("../models/repositories/cart.repo")
 const { v4: uuidv4 } = require('uuid');
 const { checkProductByServer } = require("../models/repositories/product.repo")
 const { convertToObjectIdMongoDb } = require("../utils")
-const { publishInventoryUpdate, publishOrderCreated, publishEmailSend, publishNotification, publishOrderSuccessed } = require("../utils/rabbitmqProducer")
+const { publishInventoryUpdate, publishOrderCreated, publishEmailSend, publishNotification, publishOrderSuccessed, publishOrderConfirmed } = require("../utils/rabbitmqProducer")
 const { getDiscountAmount } = require("./discount.service")
-const { sendEmailOrderShipping } = require("./email.service")
+const { sendEmailOrderShipping, sendMailCancelOrder } = require("./email.service")
 
 const { forEach } = require("lodash")
+const Payment = require("../models/payment.model")
 
 class CheckoutService {
 
@@ -201,7 +202,12 @@ class CheckoutService {
             order_payment: user_payment,
             order_products: shop_order_ids_new,
             order_trackingNumber: uuidv4(),
-            order_status: 'pending'
+            order_status: 'pending',
+            order_confirm_deadline: new Date(Date.now() + 5 * 60 * 1000),
+            shops_confirmation: shop_order_ids_new.map(order => ({
+                shopId: order.shopId,
+                status: 'pending'
+            }))
         })
 
         if (newOrder) {
@@ -216,10 +222,68 @@ class CheckoutService {
                 orderId: newOrder._id,
                 email: userAccount.usr_email,
             });
+
+            setTimeout(async () => {
+                await OrderService.autoConfirmOrder(newOrder._id)
+            }, 5 * 60 * 1000)
         }
 
         return newOrder;
     }
+
+    static async autoConfirmOrder(orderId) {
+        const existingOrder = await order.findById(orderId)
+        if (!existingOrder || existingOrder.order_status !== 'pending') {
+            return
+        }
+
+        const hasRejected = existingOrder.shops_confirmation.some(shop => shop.status === 'rejected')
+
+        if (hasRejected) {
+            await CheckoutService.cancelOrder({
+                orderId,
+                userId: existingOrder.order_userId,
+            })
+        } else {
+            existingOrder.order_status = 'confirmed'
+            existingOrder.shops_confirmation = existingOrder.shops_confirmation.map(shop => ({
+                ...shop,
+                status: shop.status === 'pending' ? 'confirmed' : shop.status
+            }))
+            await existingOrder.save()
+
+            await publishOrderConfirmed({
+                orderId, userId: existingOrder.order_userId
+            });
+        }
+    }
+
+    static async shopConfirmOrder({ orderId, shopId, status, reason = '' }) {
+        const existingOrder = await order.findById(orderId)
+        if (!existingOrder || existingOrder.order_status !== 'pending') {
+            throw new BadRequestError('Order not found or cannot be modified')
+        }
+
+        const shopConfirmation = existingOrder.shops_confirmation.find(
+            shop => shop.shopId.toString() === shopId
+        )
+        if (!shopConfirmation) {
+            throw new BadRequestError('Shop not found in this order')
+        }
+        shopConfirmation.status = status
+        shopConfirmation.reason = reason
+        await existingOrder.save()
+
+        if (status === 'rejected') {
+            await CheckoutService.cancelOrder({
+                orderId,
+                userId: existingOrder.order_userId
+            })
+        }
+
+        return existingOrder;
+    }
+
 
     static async listProductsForShop({
         orderId, userId
@@ -431,13 +495,11 @@ class CheckoutService {
                 _id: convertToObjectIdMongoDb(existingOrder.order_userId)
             }).lean()
 
-            await publishEmailSend({
-                userId,
-                orderId: existingOrder._id,
-                email: userAccount.usr_email,
-                status: 'cancelled'
-            });
-
+            //to user
+            await sendMailCancelOrder({
+                recipientName: userAccount.usr_email,
+                orderId
+            })
             return existingOrder;
 
         } catch (error) {
@@ -458,35 +520,46 @@ class CheckoutService {
                 throw new BadRequestError('Order not found');
             }
 
+            if (newStatus === 'success') {
+                const payment = await Payment.findOne({
+                    payment_orderId: orderId,
+                    payment_status: 'COMPLETED'
+                });
+    
+                if (!payment) {
+                    throw new BadRequestError('Payment not completed');
+                } else {
+                    publishOrderSuccessed({
+                        orderId
+                    })
+                }
+            }
+
             existingOrder.order_status = newStatus;
             await existingOrder.save();
 
             const userAccount = await userModel.findOne({
                 _id: convertToObjectIdMongoDb(existingOrder.order_userId)
             }).lean()
-            //shipping
-            if (newStatus === 'shipped') {
+
+            if (newStatus === 'shipping') {
                 const userEmail = userAccount.usr_email;
                 await sendEmailOrderShipping({
                     email: userEmail,
                     orderId: existingOrder._id,
                     userName: userAccount.usr_name,
                     totalAmount: existingOrder.order_checkout.totalCheckout,
-                    orderStatus: "shipped"
+                    orderStatus: "shipping"
                 })
             }
 
-            if (newStatus === 'success') {
-                publishOrderSuccessed({
-                    orderId
-                })
-            }
+
+            return newStatus;
 
         } catch (error) {
             throw new BadRequestError(error)
         }
     }
-
 
     /*đơn hàng mới */
     static async processOrder(message) {
@@ -582,7 +655,7 @@ class CheckoutService {
     }
 
     static async processOrderConfirmed(payload) {
-        const { orderId, shopId, userId } = payload;
+        const { orderId, userId } = payload;
         try {
             await publishNotification({
                 type: 'order.confirmed',

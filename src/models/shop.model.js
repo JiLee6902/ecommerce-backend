@@ -24,6 +24,11 @@ const shopSchema = new Schema({
         required: true,
 
     },
+    avatar: {
+        type: String,
+        trim: true,
+        unique: true,
+    },
     status: {
         type: String,
         enum: ['pending', 'active', 'inactive','banned'],

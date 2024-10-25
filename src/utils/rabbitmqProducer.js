@@ -31,6 +31,8 @@ const publishEmailSend = (message) => RabbitMQProducer.publishToQueue(queues.ema
 const publishNotification = (message) => RabbitMQProducer.publishToQueue(queues.notification, { ...message });
 const publishOrderCancelled = (message) => RabbitMQProducer.publishToQueue(queues.order, { type: 'order.cancelled', ...message });
 const publishOrderSuccessed = (message) => RabbitMQProducer.publishToQueue(queues.order, { type: 'order.successed', ...message });
+const publishOrderConfirmed = (message) => RabbitMQProducer.publishToQueue(queues.order, { type: 'order.confirmed', ...message });
+
 
 
 
@@ -40,5 +42,6 @@ module.exports = {
     publishEmailSend,
     publishNotification,   
     publishOrderCancelled ,
-    publishOrderSuccessed
+    publishOrderSuccessed,
+    publishOrderConfirmed
 };

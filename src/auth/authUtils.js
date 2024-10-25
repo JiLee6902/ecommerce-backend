@@ -10,7 +10,8 @@ const HEADER = {
     API_KEY: 'x-api-key',
     CLIENT_ID: 'x-client-id',
     AUTHORIZATION: 'authorization',
-    REFRESHTOKEN: 'x-rtoken-id'
+    REFRESHTOKEN: 'x-rtoken-id',
+    FORWARED_FOR: 'x-forwarded-for',
 }
 
 
@@ -21,7 +22,7 @@ const createTokenPair = async (payload, publicKey, privateKey) => {
         })
 
         const refreshToken = await JWT.sign(payload, privateKey, {
-            expiresIn: '7 days'
+            expiresIn: '3 days'
         })
 
         JWT.verify(accessToken, publicKey, (err, decode) => {
@@ -71,7 +72,7 @@ const authenticationV2 = asyncHandler(async (req, res, next) => {
         if (userId !== decodeUser.userId) throw new AuthFailureError('Invalid userId')
         req.keyStore = keyStore
         req.user = decodeUser
-
+        req.ipAddr = req.headers[FORWARED_FOR] 
         return next();
     } catch (error) {
         throw error

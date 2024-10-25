@@ -17,7 +17,7 @@ class CheckoutController {
 
     uploadFileThumb = async (req, res, next) => {
         const { file } = req
-      
+
         if (!file) {
             throw new BadRequestError('File missing!')
         }
@@ -43,14 +43,15 @@ class CheckoutController {
     }
 
     uploadImageFromLocalS3 = async (req, res, next) => {
-        const { file } = req
+        const { file, body: { folderName } } = req
         if (!file) {
             throw new BadRequestError('File missing!')
         }
         new SuccessResponse({
             message: 'Upload file success',
             metadata: await uploadImageFromLocalS3({
-                file
+                file,
+                folderName: folderName || 'default-folder'
             })
         }).send(res);
     }

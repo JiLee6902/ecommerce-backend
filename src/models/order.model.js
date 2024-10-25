@@ -30,17 +30,20 @@ const orderSchema = new Schema({
         default: {}
     },
     order_payment: {
-        type: Object,
-        default: {},
-        /*
-        order_payment = {
-            method: String, // 'credit_card', 'paypal', 'vnpay', etc.
-            status: String, // 'paid', 'pending', 'failed'
-            transactionId: String, // Mã giao dịch từ cổng thanh toán
-            amount: Number, // Số tiền thanh toán
-            currency: String, //  'USD', 'VND'
+        payment_method: {
+            type: String,
+            enum: ['VNPAY'],
+            required: true
+        },
+        payment_status: {
+            type: String,
+            enum: ['PENDING', 'COMPLETED', 'FAILED'],
+            default: 'PENDING'
+        },
+        payment_id: {
+            type: Schema.Types.ObjectId,
+            ref: 'Payment'
         }
-        */
     },
     order_products: {
         type: Array,
@@ -53,9 +56,26 @@ const orderSchema = new Schema({
     },
     order_status: {
         type: String,
-        enum: ['pending', 'confirmed', 'shipped', 'cancelled', 'success'],
+        enum: ['pending', 'confirmed', 'shipping', 'cancelled', 'success'],
         default: 'pending'
     },
+    order_shop_confirms: [{
+        shopId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Shop'
+        },
+        status: {
+            type: String,
+            enum: ['pending', 'confirmed', 'rejected'],
+            default: 'pending'
+        }
+    }],
+    auto_confirm_deadline: {
+        type: Date,
+        default: function () {
+            return new Date(Date.now() + 5 * 60000);
+        }
+    }
 }, {
     timestamps: true,
     collection: COLLECTION_NAME

@@ -792,6 +792,79 @@ const socialAccountCredentialsTemplate = () => {
     </body>
     </html>`
 }
+
+const temOrderCancelEmail = () => {
+    return `<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Order Cancellation Notification</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                width: 100%;
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #fff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+                background-color: #ff4d4d;
+                padding: 10px;
+                text-align: center;
+                color: #fff;
+            }
+            .content {
+                padding: 20px;
+            }
+            .footer {
+                text-align: center;
+                color: #777;
+                font-size: 12px;
+                padding-top: 10px;
+            }
+            .footer a {
+                color: #ff4d4d;
+                text-decoration: none;
+            }
+            .highlight {
+                color: #ff4d4d;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <!-- Tiêu đề thông báo -->
+            <div class="header">
+                <h1>Order Cancellation Notification</h1>
+            </div>
+            
+            <!-- Nội dung thông báo -->
+            <div class="content">
+                <p>Dear <strong>{{ recipientName }}</strong>,</p>
+    
+                <p>We would like to inform you that the order with ID <strong>#{{ orderId }}</strong> has been <span class="highlight">cancelled</span>. We apologize for any inconvenience this may have caused.</p>
+    
+                <p>Please contact our support team if you have any questions or need further assistance regarding this order.</p>
+    
+                <!-- Chữ ký email -->
+                <p>Thank you for your understanding</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `
+}
+
 module.exports = {
     temLogin,
     temPassword,
@@ -800,5 +873,6 @@ module.exports = {
     temNotificationEmail,
     temDLQNotiEmail,
     socialAuthVerificationTemplate,
-    socialAccountCredentialsTemplate
+    socialAccountCredentialsTemplate,
+    temOrderCancelEmail
 }

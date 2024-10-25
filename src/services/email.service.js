@@ -267,11 +267,7 @@ const sendAccountForGoogleAndFacebook = async ({
         if (!template) {
             throw new NotFoundError('Không tìm thấy template')
         }
-        const htmlContent = socialAccountCredentialsTemplate()
-            .replace('{{user_name}}', username)
-            .replace('{{email}}', email)
-            .replace('{{password}}', password)
-            .replace('{{login_url}}', loginUrl);
+
 
         const contentSend = replacePlaceHolder(
             template.tem_html,
@@ -293,6 +289,35 @@ const sendAccountForGoogleAndFacebook = async ({
     }
 }
 
+const sendMailCancelOrder = async ({
+    recipientName ,
+    orderId 
+}) => {
+    try {
+        const template = await getTemplate({
+            tem_name: 'HTML CANCEL ORDER'
+        })
+        if (!template) {
+            throw new NotFoundError('Không tìm thấy template')
+        }
+        const contentSend = replacePlaceHolder(
+            template.tem_html,
+            {
+                recipientName: recipientName,
+                orderId: orderId,
+            }
+        )
+        await sendEmailLinkVerify({
+            html: contentSend,
+            toEmail: email,
+            subject: 'Order Cancel',
+        });
+    } catch (error) {
+        console.error('Lỗi gửi email:', error)
+        throw new Error('Failed to send email')
+    }
+}
+
 module.exports = {
     sendEmailToken,
     sendEmailPassword,
@@ -301,6 +326,7 @@ module.exports = {
     sendEmailConfirmOrder,
     sendEmailDQLNoti,
     sendEmailVerification,
-    sendAccountForGoogleAndFacebook
+    sendAccountForGoogleAndFacebook,
+    sendMailCancelOrder
 }
 

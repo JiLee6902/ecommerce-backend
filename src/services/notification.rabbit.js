@@ -62,7 +62,7 @@ class NotificationRabbit {
                 break;
             case 'shop.order_cancelled':
                 notificationData = {
-                    action: `Đơn hàng đã bị hủy bởi người dùng ${data.userName}`,
+                    action: `Đơn hàng của người dùng ${data.userName} đã hủy`,
                     receivedId: data.receivedId,
                     senderId: data.senderId,
                     products: data.products,

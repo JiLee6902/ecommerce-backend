@@ -60,6 +60,18 @@ class CheckoutController {
             )
         }).send(res);
     }
+
+    paymentOrder = async (req, res, next) => {
+        new SuccessResponse({
+            message: 'Payment order',
+            metadata: await CheckoutService.paymentOrder(
+                {
+                    orderId: req.body.orderId,
+                    userId: req.body.userId
+                }
+            )
+        }).send(res);
+    }
 }
 
 module.exports = new CheckoutController()

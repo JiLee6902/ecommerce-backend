@@ -8,11 +8,15 @@ const { convertToObjectIdMongoDb } = require('../utils');
 const shopModel = require('../models/shop.model');
 const NotificationRabbit = require('./notification.rabbit');
 const MessageService = require('./message.service');
+const { AuthFailureError } = require('../core/error.response');
+const PresenceService = require('./presence.service');
 
 const redisClient = getIORedis().instanceConnect;
 
 class SocketIOService {
     static io;
+    static heartbeatInterval = 25000;
+
 
     static async #getUserInfo(userId) {
         const userAccount = await userModel.findById(convertToObjectIdMongoDb(userId)).lean();
@@ -38,12 +42,13 @@ class SocketIOService {
         });
 
         this.io.use(async (socket, next) => {
-            const req = socket.request;
             try {
-                if (req.user) {
-                    socket.user = req.user;
-                    next();
+                const req = socket.request;
+                if (!req.user) {
+                    throw new AuthFailureError('Authentication required');
                 }
+                socket.user = req.user;
+                next();
             } catch (err) {
                 next(new Error('Authentication error'));
             }
@@ -54,29 +59,97 @@ class SocketIOService {
         console.log('Socket.io is initialized.');
     }
 
+    static async #validateRoomAccess(roomId, userId, userType) {
+        const room = await RoomService.getRoomById(roomId);
+        if (!room) {
+            throw new Error('Room not found');
+        }
+
+        const hasAccess = userType === 'user'
+            ? room.user.toString() === userId.toString()
+            : room.shop.toString() === userId.toString();
+
+        if (!hasAccess) {
+            throw new Error('Access denied to this room');
+        }
+
+        return room;
+    }
+
+
+
     static async handleConnection(socket) {
         const { user } = socket;
         const { userId, userType } = await this.#getUserInfo(user.userId);
 
         const key = `noti-${userType}:${userId}:sockets`;
-        await redisClient.sadd(key, socket.id); 
+        await redisClient.sadd(key, socket.id);
+
+
+        await PresenceService.updatePresence(userId, userType, 'online')
 
         socket.on('joinRoom', async (roomId) => {
+            const room = await this.#validateRoomAccess(roomId, userId, userType);
             socket.join(roomId);
-            await MessageService.markMessagesAsRead(roomId, userId);
+
+            if (userType === 'shop' && !room.lastShopActivity) {
+                await RoomService.initializeShopActivity(roomId);
+            }
+
+            await MessageService.markMessagesAsRead(roomId, userI, userType);
+            socket.emit('roomJoined', { roomId });
         });
 
-        socket.on('leaveRoom', (roomId) => {
-            socket.leave(roomId);
+        socket.on('typing', async (roomId) => {
+            const room = await this.#validateRoomAccess(roomId, userId, userType);
+            socket.to(roomId).emit('userTyping', { userId, userType });
+        });
+
+        socket.on('stopTyping', async (roomId) => {
+            const room = await this.#validateRoomAccess(roomId, userId, userType);
+            socket.to(roomId).emit('userStopTyping', { userId, userType });
         });
 
         socket.on('sendMessage', async (data) => {
-            const { roomId, content } = data;
-            const message = await MessageService.sendMessage(roomId, userId, userType, content);
-            this.io.to(roomId).emit('newMessage', message);
+            try {
+                const { roomId, content, attachments } = data;
+
+                await this.#validateRoomAccess(roomId, userId, userType);
+
+                socket.to(roomId).emit('userStopTyping', { userId, userType });
+
+                const message = await MessageService.sendMessage(roomId, userId, userType, {
+                    content,
+                    attachments
+                });
+
+                this.io.to(roomId).emit('newMessage', message);
+
+            } catch (error) {
+                console.error('Send message error:', error);
+                socket.emit('messageError', {
+                    error: error.message,
+                    timestamp: new Date()
+                });
+            }
         });
 
-        socket.on('disconnect', () => this.handleDisconnect(socket));
+        const heartbeat = setInterval(async () => {
+            await PresenceService.updatePresence(userId, userType, 'online');
+        }, this.heartbeatInterval);
+
+        socket.on('leaveRoom', (roomId) => {
+            socket.leave(roomId);
+            socket.emit('roomLeft', { roomId });
+        });
+
+
+        socket.on('disconnect', async () => {
+            clearInterval(heartbeat);
+            await this.handleDisconnect(socket);
+            await PresenceService.updatePresence(userId, userType, 'offline');
+
+        });
     }
 
     static async handleDisconnect(socket) {
@@ -85,13 +158,13 @@ class SocketIOService {
 
         if (userId) {
             const key = `noti-${userType}:${userId}:sockets`;
-            await redisClient.srem(key, socket.id); 
+            await redisClient.srem(key, socket.id);
         }
     }
 
     static async sendNotification(recipientId, recipientType, data) {
         const key = `noti-${recipientType}:${recipientId}:sockets`;
-        const socketIds = await redisClient.smembers(key); 
+        const socketIds = await redisClient.smembers(key);
 
         if (socketIds.length > 0) {
             const dataArray = Array.isArray(data) ? data : [data];

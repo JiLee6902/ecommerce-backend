@@ -19,5 +19,7 @@ router.get('/:userId/get-all-orders',  grantAccess('readOwn', 'checkout'), async
 
 router.patch('/:orderId/:userId/cancel', grantAccess('updateOwn', 'checkout', { strict: true }), asyncHandler(checkoutController.cancelOrder));
 router.patch('/:orderId/status', grantAccess('updateOwn', 'checkout', { strict: true }) , asyncHandler(checkoutController.updateOrderStatus));
+router.put('/payment_confirm',  grantAccess('readOwn', 'checkout', { strict: true }), asyncHandler(checkoutController.paymentOrder));
+
 
 module.exports = router;
