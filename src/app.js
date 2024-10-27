@@ -90,7 +90,7 @@ async function initializeElasticsearch() {
 }
 initializeElasticsearch();
 //rabbitMQ
-startWorkers();
+//startWorkers();
 
 // *** init db ***
 //init mongo

@@ -2,7 +2,7 @@
 
 const amqp = require('amqplib');
 
-const amqp_url_docker = 'amqp://guest:12345@rabbitmq';
+const amqp_url_docker = 'amqp://guest:12345@rabbitmq:5672';
 
 const exchanges = {
     order: 'orderExchange',

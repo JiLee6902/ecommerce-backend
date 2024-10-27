@@ -11,7 +11,7 @@ const { convertToObjectIdMongoDb, getInfoData } = require("../utils");
 const { sendEmailToken, sendEmailPassword } = require("./email.service");
 const KeyTokenService = require("./keyToken.service");
 const { checkEmailToken } = require("./otp.service");
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcryptjs')
 const crypto = require('crypto')
 const { sendEmailForgotPassword } = require("./email.service");
 const roleModel = require("../models/role.model");
@@ -167,7 +167,7 @@ const forgotPassword = async ({ email }) => {
 
     const resetToken = crypto.randomBytes(20).toString('hex');
     user.usr_reset_password_token = resetToken;
-    user.usr_reset_password_expires = Date.now() + 1800000; 
+    user.usr_reset_password_expires = Date.now() + 1800000;
 
     user.usr_password_reset_count += 1;
     user.usr_last_password_reset_request = now;
@@ -175,7 +175,7 @@ const forgotPassword = async ({ email }) => {
     await user.save();
 
     const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`
-    
+
     await sendEmailForgotPassword({
         email,
         resetLink

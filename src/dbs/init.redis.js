@@ -56,7 +56,7 @@ const handleEventConnection = ({
 
 const initRedis = (options = {}) => {
     const defaultOptions = {
-        url: 'redis://localhost:6379',
+        url: 'redis://redis:6379',
         // retry_strategy: (options) => { 
         //     if (options.attempt > 10) {
         //         return undefined;

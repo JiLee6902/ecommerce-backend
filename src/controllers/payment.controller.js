@@ -10,7 +10,7 @@ class PaymentController {
             metadata: await PaymentService.createPaymentUrl({
                 orderId: req.body.orderId,
                 userId: req.user.userId,
-                ipAddr: req.ip
+                ipAddr: req.ipAddr
             })
         }).send(res);
     }

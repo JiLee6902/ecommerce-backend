@@ -1,7 +1,7 @@
 'use-strict'
 
 const shopModel = require("../models/shop.model")
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const Shop = require('../models/shop.model');
 const Order = require('../models/order.model');

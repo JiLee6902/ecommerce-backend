@@ -55,6 +55,7 @@ const authenticationV2 = asyncHandler(async (req, res, next) => {
             req.keyStore = keyStore
             req.user = decodeUser
             req.refreshToken = refreshToken
+            req.ipAddr = req.headers[HEADER.FORWARED_FOR] 
 
             return next();
         } catch (error) {
@@ -72,7 +73,7 @@ const authenticationV2 = asyncHandler(async (req, res, next) => {
         if (userId !== decodeUser.userId) throw new AuthFailureError('Invalid userId')
         req.keyStore = keyStore
         req.user = decodeUser
-        req.ipAddr = req.headers[FORWARED_FOR] 
+        req.ipAddr = req.headers[HEADER.FORWARED_FOR] 
         return next();
     } catch (error) {
         throw error

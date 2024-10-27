@@ -10,7 +10,7 @@ const { convertToObjectIdMongoDb, getInfoData } = require("../utils");
 const { sendEmailToken, sendEmailPassword } = require("./email.service");
 const KeyTokenService = require("./keyToken.service");
 const { checkEmailToken } = require("./otp.service");
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { sendEmailForgotPassword } = require("./email.service");
 
