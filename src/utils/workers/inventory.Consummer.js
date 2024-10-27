@@ -6,7 +6,7 @@ const {updateInventory} = require('../../models/repositories/inventory.repo')
 const inventoryConsumer = async () => {
     try {
         const { channel } = await setupRabbitMQ();
-
+        await channel.prefetch(1);
         channel.consume(queues.inventory, async (msg) => {
             if (msg !== null) {
                 const content = JSON.parse(msg.content.toString());

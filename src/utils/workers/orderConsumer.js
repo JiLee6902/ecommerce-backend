@@ -5,7 +5,7 @@ const CheckoutService  = require('../../services/checkout.service');
 const orderConsumer = async () => {
     try {
         const { channel } = await setupRabbitMQ();
-
+        await channel.prefetch(1);
         channel.consume(queues.order, async (msg) => {
             if (msg !== null) {
                 const content = JSON.parse(msg.content.toString());

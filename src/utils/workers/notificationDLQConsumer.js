@@ -14,7 +14,7 @@ const notificationDLQConsumer = async () => {
         await channel.assertExchange(dlxExchange, 'fanout', { durable: true });
         await channel.assertQueue(dlqQueue, { durable: true });
         await channel.bindQueue(dlqQueue, dlxExchange, '');
-
+        await channel.prefetch(1);
         channel.consume(dlqQueue, async (msg) => {
             if (msg !== null) {
                 const content = msg.content.toString();

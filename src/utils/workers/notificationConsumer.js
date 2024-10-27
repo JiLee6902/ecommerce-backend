@@ -7,7 +7,7 @@ const { setupRabbitMQ, queues } = require('../rabbitmqConfig');
 const notificationConsumer = async () => {
     try {
         const { channel } = await setupRabbitMQ();
-
+        await channel.prefetch(1);
         channel.consume(queues.notification, async (msg) => {
             if (msg !== null) {
                 const content = JSON.parse(msg.content.toString());

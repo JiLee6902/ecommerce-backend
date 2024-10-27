@@ -55,7 +55,7 @@ const authenticationV2 = asyncHandler(async (req, res, next) => {
             req.keyStore = keyStore
             req.user = decodeUser
             req.refreshToken = refreshToken
-            req.ipAddr = req.headers[HEADER.FORWARED_FOR] 
+            req.ipAddr = req.headers[HEADER.FORWARED_FOR]
 
             return next();
         } catch (error) {
@@ -66,14 +66,14 @@ const authenticationV2 = asyncHandler(async (req, res, next) => {
     const accessToken = req.headers[HEADER.AUTHORIZATION]
     if (!accessToken) throw new AuthFailureError('Invalid Request!')
 
-   
+
     try {
 
         const decodeUser = JWT.verify(accessToken, keyStore.publicKey)
         if (userId !== decodeUser.userId) throw new AuthFailureError('Invalid userId')
         req.keyStore = keyStore
         req.user = decodeUser
-        req.ipAddr = req.headers[HEADER.FORWARED_FOR] 
+        req.ipAddr = req.headers[HEADER.FORWARED_FOR]
         return next();
     } catch (error) {
         throw error
@@ -94,7 +94,7 @@ const extractUserIdFromToken = async (req) => {
     const accessToken = req.headers[HEADER.AUTHORIZATION]
     if (!accessToken) throw new AuthFailureError('Invalid Request!')
 
-   
+
     try {
         const decodeUser = JWT.verify(accessToken, keyStore.publicKey)
         if (userId !== decodeUser.userId) throw new AuthFailureError('Invalid userId')
