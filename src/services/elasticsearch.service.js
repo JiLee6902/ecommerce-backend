@@ -33,16 +33,45 @@ class ElasticsearchService {
       await this.client.indices.create({
         index: this.productIndex,
         body: {
+          settings: {
+            analysis: {
+              analyzer: {
+                custom_analyzer: {
+                  type: 'custom',
+                  tokenizer: 'standard',
+                  filter: ['lowercase', 'asciifolding', 'word_delimiter']
+                }
+              }
+            }
+          },
           mappings: {
             properties: {
-              product_name: { type: 'text' },
-              product_description: { type: 'text' },
+              product_name: {
+                type: 'text',
+                analyzer: 'custom_analyzer',
+                fields: {
+                  suggest: {
+                    type: 'completion',
+                    analyzer: 'custom_analyzer'
+                  },
+                  keyword: {
+                    type: 'keyword'
+                  }
+                }
+              },
+              product_description: {
+                type: 'text'
+              },
               product_price: { type: 'float' },
               product_type: { type: 'keyword' },
               product_shop: { type: 'keyword' },
+              product_category: { type: 'keyword' },
               product_attributes: { type: 'object' },
+              product_ratingsAverage: { type: 'float' },
               isPublished: { type: 'boolean' },
-              total_sales_count: { type: 'integer' }
+              isDraft: { type: 'boolean' },
+              total_sales_count: { type: 'integer' },
+              created_at: { type: 'date' }
             }
           }
         }
@@ -120,13 +149,51 @@ class ElasticsearchService {
           product_price: productData.product_price,
           product_type: productData.product_type,
           product_shop: productData.product_shop.toString(),
+          product_category: productData.product_category.toString(),
           product_attributes: productData.product_attributes,
+          product_ratingsAverage: productData.product_ratingsAverage,
           isPublished: productData.isPublished,
-          total_sales_count: 0
+          isDraft: productData.isDraft,
+          total_sales_count: 0,
+          created_at: new Date(),
+          suggest: {
+            input: [
+              productData.product_name
+            ]
+          }
         }
       });
     } catch (error) {
-      throw new BadRequestError('Failed to product');
+      throw new BadRequestError('Failed to add product');
+    }
+  }
+
+  async getProductSuggestions(prefix, size = 5) {
+    try {
+      const result = await this.client.search({
+        index: this.productIndex,
+        body: {
+          suggest: {
+            product_suggestions: {
+              prefix,
+              completion: {
+                field: 'product_name.suggest', // Field này phải là type completion
+                size,
+                fuzzy: {
+                  fuzziness: 1
+                }
+              }
+            }
+          }
+        }
+      });
+
+      return result.body.suggest.product_suggestions[0].options.map(option => ({
+        text: option._source.product_name,
+        score: option._score
+      }));
+    } catch (error) {
+      throw new BadRequestError('Failed to get suggestions');
     }
   }
 
@@ -290,7 +357,7 @@ class ElasticsearchService {
     if (sort_by) {
       body.sort = [{ [sort_by]: { order: order || 'desc' } }];
     }
- 
+
 
     try {
       const result = await this.client.search({
